@@ -2,6 +2,7 @@
 import os
 import joblib
 import pandas as pd
+import pickle
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OrdinalEncoder, OneHotEncoder
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -12,6 +13,10 @@ from utils.custom_transformers import DateTimeFeatures, TextCleaner
 # --- adjust paths ---
 ARTIFACT_DIR = "artifacts"
 os.makedirs(ARTIFACT_DIR, exist_ok=True)
+
+# -- Load Model
+with open(os.path.join(ARTIFACT_DIR, "model.pkl"), "rb") as f:
+    ridge_model = pickle.load(f)
 
 # === columns based on your raw schema ===
 text_columns = ["text_content", "mentions", "hashtags"]
@@ -67,7 +72,7 @@ preprocessor = ColumnTransformer(
 
 final_pipeline = Pipeline([
     ("preprocessor", preprocessor),
-    ("model", Ridge(alpha=1.0))
+    ("model", ridge_model)
 ])
 
 # === Load raw df (replace with your path or dataframe) ===

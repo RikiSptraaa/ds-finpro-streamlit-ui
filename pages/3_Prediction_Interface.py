@@ -55,7 +55,10 @@ for f, default in example_input.items():
     if isinstance(default, (int, float)):
         val = st.number_input(f, value=float(default), format="%.6f")
     else:
-        val = st.text_input(f, value=str(default))
+        if f == 'text_content':
+            val = st.text_area(f, value=str(default))
+        else:
+            val = st.text_input(f, value=str(default))
     user_input[f] = val
 
 if st.button("Predict Single Record"):
