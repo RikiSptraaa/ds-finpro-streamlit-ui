@@ -1,13 +1,18 @@
 import streamlit as st
 import pandas as pd
-import joblib
-from utils.custom_transformers import DateTimeFeatures, TextCleaner
+import pickle
+from utils.custom_transformers import DateTimeFeatures, TextCleaner, Preproccess
+import os
 
 st.set_page_config(page_title="Prediction", layout="wide")
 st.title("🔮 Sentiment Prediction Interface")
 
-# Load pipeline (preprocessor + trained model)
-pipeline = joblib.load("artifacts/final_pipeline.joblib")
+# Load Model
+ARTIFACT_DIR = "artifacts"
+os.makedirs(ARTIFACT_DIR, exist_ok=True)
+
+with open(os.path.join(ARTIFACT_DIR, "model.pkl"), "rb") as f:
+    ridge_model = pickle.load(f)
 
 # Target variable
 target = "sentiment_score"
@@ -64,8 +69,13 @@ for f, default in example_input.items():
 if st.button("Predict Single Record"):
     X_new = pd.DataFrame([user_input])
     try:
-        pred = pipeline.predict(X_new)[0]
+        preprocessor = Preproccess()
+
+        X_transform = preprocessor.transform(X_new)
+
+        pred = ridge_model.predict(X_transform)[0]
         st.success(f"Predicted {target}: {pred:.6f}")
+
     except Exception as e:
         st.error(f"Prediction failed: {e}")
 
@@ -88,7 +98,14 @@ if st.button("Predict Batch"):
     from io import StringIO
     try:
         df_new = pd.read_csv(StringIO(text))
-        preds = pipeline.predict(df_new)
+
+        st.dataframe(df_new.head())
+
+        preprocessor = Preproccess()
+        df_transform = preprocessor.transform(df_new)
+
+        st.dataframe(df_transform)
+        preds = ridge_model.predict(df_transform)
         out = df_new.copy()
         out[f"pred_{target}"] = preds
         st.dataframe(out)
